@@ -12,29 +12,40 @@ static char* consoleRead(){
 	return reading;
 }
 	
-static void execute(char* command){
+static int execute(char* command){
 	char* cmd_exit = "exit";
+	int status;
 	
 	if(strncmp(command, cmd_exit, strlen(cmd_exit))==0) {
 		consolePrint("Bye bye...\n");
 		exit(EXIT_SUCCESS);
 	}
-	else {
-		pid_t pid = fork();
-		if (pid==0){
-			execlp(command, command, (char *) NULL);
-		}
+
+	
+	pid_t pid = fork();
+	if (pid==0){
+		execlp(command, command, (char *) NULL);
+		exit(EXIT_SUCCESS);
 	}
+	waitpid(pid, &status, 0);
+	return WEXITSTATUS(status);
+
 } 
 	
 int main(int argc ,char *argv [ ]){
 	char* command;
+	int ex_status;
+	char prompt[PROMPTSIZE];
 	
 	consolePrint("Welcome to ENSEA Tiny Shell.\nPour quitter, tapez 'exit'\n");
+	consolePrint("ensea \% ");
 	
 	while(1){
-		consolePrint("ensea \% ");
 		command = consoleRead();
-		execute(command);
+		ex_status = execute(command);
+		sprintf(prompt, "ensea [exit:%d] %% ", ex_status);
+		consolePrint(prompt);
 	}
+	
+	return 0;
 }
