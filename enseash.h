@@ -1,4 +1,6 @@
 #include <unistd.h> 
 #include <string.h>
-#include "consolePrint.h"
-#include "Q1.h"
+#include <stdio.h>
+
+static void consolePrint (const char *s);
+
