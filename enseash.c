@@ -6,6 +6,7 @@ static void consolePrint (const char *s)
 }
 
 static char* consoleRead(){
+	
 	char * reading = malloc(READSIZE);
 	int lenght = read(STDIN_FILENO, reading, READSIZE);
 	reading[lenght-1] = '\0';
@@ -14,6 +15,7 @@ static char* consoleRead(){
 }
 	
 static int execute(char* command, struct timespec * start, struct timespec * stop){
+	
 	char* cmd_exit = "exit";
 	int status;
 	
@@ -36,8 +38,8 @@ static int execute(char* command, struct timespec * start, struct timespec * sto
 		char * token = strtok(command, " ");
 
 		// Then loop through the string to extract all other tokens
-
 		int i = 0;
+		int whereInput;
 		while( token != NULL ) {
 			if (asOutput == 1 || asInput == 1) {
 				filename = token;
@@ -52,6 +54,7 @@ static int execute(char* command, struct timespec * start, struct timespec * sto
 			if (strcmp(token, "<") == 0) {
 			  asInput = 1;
 			  token_array[i] = NULL;
+			  whereInput = i;
 			}
 			
 			token = strtok(NULL, " ");
@@ -68,6 +71,29 @@ static int execute(char* command, struct timespec * start, struct timespec * sto
 			dup2(descriptor, 1);
 		}
 		
+		if (asInput==1) {
+			
+			// takes the content of a file as a command input
+			mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
+			char buf[COMMANDSIZE];
+			size_t nbytes = sizeof(buf);
+			
+			int descriptor = open(filename, O_RDONLY, mode);
+			ssize_t bsize = read(descriptor, buf, nbytes);
+			
+			// bsize indicates the size of the read bytes.
+			// We put a null at this place to take only the readable arguments.
+			buf[bsize] = '\0';
+			
+			char * input_str = strtok(buf, " ");
+			while(input_str != NULL) {
+				token_array[whereInput] = input_str;
+				input_str = strtok(NULL, " ");
+				whereInput++;
+			}
+			token_array[whereInput] = NULL;
+		}
+		
 		execvp(token_array[0], token_array);
 	
 		consolePrint("Error: invalid command\n");
@@ -81,6 +107,8 @@ static int execute(char* command, struct timespec * start, struct timespec * sto
 } 
 	
 void checkStatus(int status, struct timespec * start, struct timespec * stop){
+	// Check and displays the exit status of a child process.
+	
 	char prompt[PROMPTSIZE];
 	double counter = (stop->tv_nsec - start->tv_nsec)/1e6;
 	
@@ -103,7 +131,7 @@ void checkStatus(int status, struct timespec * start, struct timespec * stop){
 int main(){
 
 	char* command;
-	int ex_status;
+	int exec_status;
 	struct timespec start, stop;
 	
 	consolePrint("Welcome to ENSEA Tiny Shell.\nPour quitter, tapez 'exit'\n");
@@ -111,8 +139,8 @@ int main(){
 	
 	while(1){
 		command = consoleRead();
-		ex_status = execute(command, &start, &stop);
-		checkStatus(ex_status, &start, &stop);
+		exec_status = execute(command, &start, &stop);
+		checkStatus(exec_status, &start, &stop);
 	}
 	
 	return 0;

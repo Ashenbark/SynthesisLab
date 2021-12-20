@@ -6,7 +6,9 @@
 #include <time.h>
 #include <unistd.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <fcntl.h>
+#include <stddef.h>
 
 #define READSIZE 50
 #define PROMPTSIZE 50
