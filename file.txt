@@ -1,5 +1,0 @@
-enseash
-enseash.c
-enseash.h
-file.txt
-Makefile
